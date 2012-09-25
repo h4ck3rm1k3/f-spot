@@ -48,7 +48,9 @@ using FSpot.UI.Dialog;
 
 using Hyena;
 using Hyena.Widgets;
+//using GLib.ExceptionManager.UnhandledException;
 
+using System.Diagnostics;
 
 namespace FSpot.Exporters.Flickr
 {
@@ -156,49 +158,66 @@ namespace FSpot.Exporters.Flickr
 					used_bandwidth.Visible = false;
 					break;
 				case State.Authorized:
-					do_export_flickr.Sensitive = true;
-					auth_flickr.Sensitive = true;
-					auth_label.Text = System.String.Format (Catalog.GetString ("Welcome {0} you are connected to {1}"),
-										auth.User.Username,
-										current_service.Name);
-					auth_flickr.Label = String.Format (Catalog.GetString ("Sign in as a different user"), auth.User.Username);
-					used_bandwidth.Visible = !fr.Connection.PeopleGetUploadStatus().IsPro &&
-									fr.Connection.PeopleGetUploadStatus().BandwidthMax > 0;
-					if (used_bandwidth.Visible) {
-						used_bandwidth.Fraction = fr.Connection.PeopleGetUploadStatus().PercentageUsed;
-						used_bandwidth.Text = string.Format (Catalog.GetString("Used {0} of your allowed {1} monthly quota"),
-									GLib.Format.SizeForDisplay (fr.Connection.PeopleGetUploadStatus().BandwidthUsed),
-									GLib.Format.SizeForDisplay (fr.Connection.PeopleGetUploadStatus().BandwidthMax));
-					}
-					break;
-				}
-				state = value;
-			}
-		}
-
-		public FlickrExport (IBrowsableCollection selection, bool display_tags) :
-			this (SupportedService.Flickr, selection, display_tags)
-		{ }
-
-
-		public FlickrExport (SupportedService service, IBrowsableCollection selection, bool display_tags) : this ()
-		{
-			Run (service, selection, display_tags);
-		}
-
+                                    do_export_flickr.Sensitive = true;
+                                    auth_flickr.Sensitive = true;
+                                    auth_label.Text = System.String.Format (Catalog.GetString ("Welcome {0} you are connected to {1}"),
+                                                                            auth.User.Username,
+                                                                            current_service.Name);
+                                    auth_flickr.Label = String.Format (Catalog.GetString ("Sign in as a different user"), auth.User.Username);
+                                    
+                                    
+                                    try {
+                                        FlickrNet.UserStatus  status = 
+                                            fr.Connection.PeopleGetUploadStatus();
+                                        
+                                        used_bandwidth.Visible = !status.IsPro &&
+                                            status.BandwidthMax > 0;
+                                        
+                                        if (used_bandwidth.Visible) {
+                                            used_bandwidth.Fraction = status.PercentageUsed;
+                                            used_bandwidth.Text = string.Format (Catalog.GetString("Used {0} of your allowed {1} monthly quota"),
+                                                                                 GLib.Format.SizeForDisplay (status.BandwidthUsed),
+                                                                                 GLib.Format.SizeForDisplay (status.BandwidthMax));
+                                            
+                                            
+                                        }
+                                    }
+                                    //                                    catch (GLib.ExceptionManager.UnhandledException e){
+                                    //                                        Debug.WriteLine("could not get PeopleGetUploadStatus");
+                                    //} 
+                                    catch (Exception e) {
+                                        Debug.WriteLine("could not get PeopleGetUploadStatus 2");
+                                    }                                            
+                                    break;
+                                
+                                }
+                                state = value;
+                        }
+                }
+        
+                public FlickrExport (IBrowsableCollection selection, bool display_tags) :
+                    this (SupportedService.Flickr, selection, display_tags)
+                    { }
+                
+                
+                public FlickrExport (SupportedService service, IBrowsableCollection selection, bool display_tags) : this ()
+                    {
+                        Run (service, selection, display_tags);
+                    }
+                
 		public FlickrExport ()
-		{
-
-		}
-
+                    {
+                        
+                    }
+                
 		public virtual void Run (IBrowsableCollection selection)
 		{
-			Run (SupportedService.Flickr, selection, false);
+                    Run (SupportedService.Flickr, selection, false);
 		}
-
+                
 		public void Run (SupportedService service, IBrowsableCollection selection, bool display_tags)
 		{
-			this.selection = selection;
+                    this.selection = selection;
 			this.current_service = FlickrRemote.Service.FromSupported (service);
 
 			var view = new TrayView (selection);
@@ -605,5 +624,6 @@ namespace FSpot.Exporters.Flickr
 				return dialog;
 			}
 		}
-	}
+        }
 }
+
